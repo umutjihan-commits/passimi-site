@@ -29,9 +29,13 @@ let lang = ls.get('lang', null);
 if (!D.langs.includes(lang)) {
   lang = (navigator.languages ?? [navigator.language ?? 'en']).map((l) => l.slice(0, 2).toLowerCase()).find((l) => D.langs.includes(l)) ?? 'en';
 }
-let passports = (ls.get('passports', []) || []).filter((p) => p && p.c in idx).slice(0, 4)
+// Sinirlar: 2 pasaport, 2 oturum, 2 vize
+const MAX_P = 2, MAX_DOC = 2;
+let passports = (ls.get('passports', []) || []).filter((p) => p && p.c in idx).slice(0, MAX_P)
   .map((p) => ({ c: p.c, t: TYPES.includes(p.t) ? p.t : 'ordinary' }));
 let docs = (ls.get('docs', []) || []).filter((d) => d && (d.c in idx || d.c === '_SCH') && (d.k === 'permit' || d.k === 'visa'));
+docs = [...docs.filter((d) => d.k === 'permit').slice(0, MAX_DOC), ...docs.filter((d) => d.k === 'visa').slice(0, MAX_DOC)];
+const docCount = (k) => docs.filter((d) => d.k === k).length;
 let visited = new Set((ls.get('visited', []) || []).filter((c) => c in idx));
 let unOnly = !!ls.get('unOnly', false);
 let docKind = 'permit';
@@ -82,8 +86,8 @@ function visaLabel(r) {
 }
 const sch = new Set(D.schengen);
 const inSch = (c) => c === '_SCH' || sch.has(c);
-/** Oturum izni / vize bu ulkeye girisi sagliyor mu? (etiket ya da null) */
-function docCover(dest) {
+/** Oturum izni / vize bu ulkeye girisi sagliyor mu? (etiket ya da null). r = pasaportla cozulen sonuc */
+function docCover(dest, r) {
   const permits = docs.filter((d) => d.k === 'permit'), visas = docs.filter((d) => d.k === 'visa');
   if (permits.some((d) => d.c === dest)) return t('hasResidence', { country: cname(dest) });
   if (visas.some((d) => d.c === dest)) return t('hasVisa', { country: cname(dest) });
@@ -97,6 +101,14 @@ function docCover(dest) {
     if (visas.some((d) => d.c === 'GB')) return t('ukVisa');
   }
   if (dest === 'GB' && permits.some((d) => d.c === 'IE')) return t('ieResidence');
+  // Karadag (01.11.2026): vize gereken pasaportlar gecerli Schengen / ABD / BK / Irlanda vizesi ya da
+  // oturumu ile vizesiz (30 gune kadar). Pasaport zaten vizesizse dokunulmaz. Uygulamadaki kuralla ayni.
+  if (dest === 'ME' && !'oftea'.includes(r.t)) {
+    const ok = (c) => inSch(c) || c === 'US' || c === 'GB' || c === 'IE';
+    const p = permits.find((d) => ok(d.c)), v = visas.find((d) => ok(d.c));
+    if (p) return inSch(p.c) ? t('schengenResidence', { country: cname(p.c) }) : p.c === 'GB' ? t('ukResidence') : p.c === 'IE' ? t('ieResidence') : t('visaFreeWithResidence', { country: cname(p.c) });
+    if (v) return inSch(v.c) ? t('schengenVisa') : v.c === 'GB' ? t('ukVisa') : t('visaFreeWithVisa', { country: cname(v.c) });
+  }
   return null;
 }
 let cache = new Map();
@@ -107,7 +119,7 @@ function infoOf(c) {
     if (!passports.length) v = { free: null, label: '', g: null, d: 0 };
     else {
       const r = resolve(c);
-      const cov = r.t === 'o' ? null : docCover(c);
+      const cov = r.t === 'o' ? null : docCover(c, r);
       v = cov ? { free: true, label: cov, g: 'f', d: 0 } : { free: 'oftea'.includes(r.t), label: visaLabel(r), g: r.t, d: r.d };
     }
     cache.set(c, v);
@@ -448,9 +460,10 @@ function combo(root, items, onPick) {
     else if (e.key === 'Escape') input.blur();
   };
 }
+const unSet = new Set(D.un);
 function countryItems(skip) {
   const coll = new Intl.Collator(lang);
-  return D.codes.filter((c) => !skip(c)).map((c) => ({ c, label: cname(c) })).sort((a, b) => coll.compare(a.label, b.label));
+  return D.codes.filter((c) => !skip(c) && (!unOnly || unSet.has(c))).map((c) => ({ c, label: cname(c) })).sort((a, b) => coll.compare(a.label, b.label));
 }
 function commit() {
   ls.set('passports', passports);
@@ -479,16 +492,23 @@ function renderForm() {
     }
     return chip(p.c, extra, () => { passports.splice(i, 1); commit(); });
   }));
-  $('#pcombo').hidden = passports.length >= 4;
+  $('#pcombo').hidden = passports.length >= MAX_P;
   $('#dchips').replaceChildren(...docs.map((d, i) =>
     chip(d.c, el('small', null, t(d.k === 'permit' ? 'kindPermit' : 'kindVisa')), () => { docs.splice(i, 1); commit(); })));
-  for (const b of $('#kind').children) b.classList.toggle('on', b.dataset.k === docKind);
+  // Dolan tur secilemez; secili tur dolduysa digerine gec, ikisi de doluysa giris kutusu gizlenir
+  if (docCount(docKind) >= MAX_DOC) docKind = docKind === 'permit' ? 'visa' : 'permit';
+  const full = docCount('permit') >= MAX_DOC && docCount('visa') >= MAX_DOC;
+  for (const b of $('#kind').children) {
+    b.classList.toggle('on', !full && b.dataset.k === docKind);
+    b.disabled = docCount(b.dataset.k) >= MAX_DOC;
+  }
+  $('#dcombo').hidden = full;
   const locked = !passports.length;
   wrap.classList.toggle('locked', locked);
   $('#gate').hidden = !locked;
 }
 combo($('#pcombo'), () => countryItems((c) => passports.some((p) => p.c === c)), (o) => {
-  if (passports.length < 4) passports.push({ c: o.c, t: 'ordinary' });
+  if (passports.length < MAX_P) passports.push({ c: o.c, t: 'ordinary' });
   commit();
 });
 combo($('#dcombo'), () => {
@@ -496,11 +516,12 @@ combo($('#dcombo'), () => {
   // Schengen vizesi hangi ulkeden alinmis olursa olsun butun bolgede gecerli: ayri secenek
   if (docKind === 'visa' && !docs.some((d) => d.c === '_SCH')) list.unshift({ c: '_SCH', label: t('schengen') });
   return list;
-}, (o) => { docs.push({ c: o.c, k: docKind }); commit(); });
-for (const b of $('#kind').children) b.onclick = () => { docKind = b.dataset.k; renderForm(); $('#dcombo input').focus(); };
+}, (o) => { if (docCount(docKind) < MAX_DOC) docs.push({ c: o.c, k: docKind }); commit(); });
+for (const b of $('#kind').children) b.onclick = () => { if (b.disabled) return; docKind = b.dataset.k; renderForm(); $('#dcombo input').focus(); };
 $('#gate button').onclick = () => { $('#pcombo input').focus(); };
-$('#un').checked = unOnly;
-$('#un').onchange = (e) => { unOnly = e.target.checked; ls.set('unOnly', unOnly); paint(); };
+const unSeg = () => { for (const b of $('#unseg').children) b.classList.toggle('on', (b.dataset.u === '1') === unOnly); };
+for (const b of $('#unseg').children) b.onclick = () => { unOnly = b.dataset.u === '1'; ls.set('unOnly', unOnly); unSeg(); paint(); };
+unSeg();
 
 // ------------------------------------------------------------------ dil
 const LANG_NAMES = { en: 'English', tr: 'Türkçe', es: 'Español', fr: 'Français', ru: 'Русский' };

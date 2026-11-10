@@ -48,7 +48,7 @@
 
   <div class="card form" id="tool">
     <div class="field">
-      <div class="lab"><span data-i="passports">Your passports</span> <em data-i="max4">up to 4</em></div>
+      <div class="lab"><span class="lt"><span data-i="passports">Your passports</span> <em data-i="max4">up to 2</em></span></div>
       <div class="line">
         <div class="chips" id="pchips"></div>
         <div class="combo" id="pcombo">
@@ -58,18 +58,17 @@
       </div>
     </div>
     <div class="field">
-      <div class="lab"><span data-i="docs">Residence permit or visa</span> <em data-i="optional">optional</em></div>
+      <div class="lab"><span class="lt"><span data-i="docs">Residency or visa</span> <em data-i="optional">optional</em></span>
+        <div class="seg sm" id="kind" role="group">
+          <button type="button" data-k="permit" data-i="kindPermit" class="on">Residency</button>
+          <button type="button" data-k="visa" data-i="kindVisa">Visa</button>
+        </div>
+      </div>
       <div class="line">
         <div class="chips" id="dchips"></div>
-        <div class="docadd">
-          <div class="seg" id="kind" role="group">
-            <button type="button" data-k="permit" data-i="kindPermit" class="on">Residence permit</button>
-            <button type="button" data-k="visa" data-i="kindVisa">Visa</button>
-          </div>
-          <div class="combo" id="dcombo">
-            <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-ip="docAdd" placeholder="Country" aria-label="Country">
-            <ul hidden></ul>
-          </div>
+        <div class="combo" id="dcombo">
+          <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-ip="docAdd" placeholder="Country" aria-label="Country">
+          <ul hidden></ul>
         </div>
       </div>
     </div>
@@ -87,7 +86,10 @@
     </div>
     <div class="under">
       <div class="stats" id="stats"></div>
-      <label class="switch"><input type="checkbox" id="un"><i></i><span data-i="unLabel">UN Countries</span></label>
+      <div class="seg" id="unseg" role="group">
+        <button type="button" data-u="0" data-i="allCountries" class="on">All Countries</button>
+        <button type="button" data-u="1" data-i="unLabel">UN Countries</button>
+      </div>
     </div>
   </div>
 </div>
