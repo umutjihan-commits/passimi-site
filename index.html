@@ -19,13 +19,9 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="top">
-  <select id="lang" aria-label="Language"></select>
-</header>
-
-<main>
-  <section class="hero">
-    <svg class="logo" viewBox="-64 -104 888 420" role="img" aria-label="passimi">
+<div class="first">
+  <header class="top">
+    <a class="brand" href="/" aria-label="passimi"><svg class="logo" viewBox="-64 -104 888 420" role="img" aria-label="passimi">
       <g class="ink">
         <circle cx="61" cy="140" r="49"/><path d="M12 91V239"/>
         <g transform="translate(-4 0)"><circle cx="207" cy="140" r="49"/><path d="M256 91V189"/></g>
@@ -46,70 +42,64 @@
             keyPoints="0;0;1" keyTimes="0;0.24;1" calcMode="spline" keySplines="0 0 1 1;0.45 0 0.2 1"/>
         </g>
       </g>
-    </svg>
-    <p class="tagline" data-i="tagline">Passports, visas, residence permits and trips. One app.</p>
-    <div class="stores">
-      <span class="store"><small data-i="soon">Coming soon</small><b>App Store</b></span>
-      <span class="store"><small data-i="soon">Coming soon</small><b>Google Play</b></span>
+    </svg></a>
+    <h1 class="ttl" data-i="toolTitle">Where can your passport take you?</h1>
+    <select id="lang" aria-label="Language"></select>
+  </header>
+
+  <div class="card form" id="tool">
+    <div class="field">
+      <div class="lab"><span data-i="passports">Your passports</span> <em data-i="max4">up to 4</em></div>
+      <div class="line">
+        <div class="chips" id="pchips"></div>
+        <div class="combo" id="pcombo">
+          <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-ip="passportAdd" placeholder="Add a passport" aria-label="Add a passport">
+          <ul hidden></ul>
+        </div>
+      </div>
     </div>
-  </section>
-
-  <section class="tool" id="tool">
-    <h1 data-i="toolTitle">Where can your passport take you?</h1>
-    <p class="sub" data-i="toolSub">Add your passports and see the world in four colours: where you have been, and where you can go without a visa.</p>
-
-    <div class="card form">
-      <div class="field">
-        <div class="lab"><span data-i="passports">Your passports</span> <em data-i="max4">up to 4</em></div>
-        <div class="line">
-          <div class="chips" id="pchips"></div>
-          <div class="combo" id="pcombo">
-            <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-ip="passportAdd" placeholder="Add a passport" aria-label="Add a passport">
+    <div class="field">
+      <div class="lab"><span data-i="docs">Residence permit or visa</span> <em data-i="optional">optional</em></div>
+      <div class="line">
+        <div class="chips" id="dchips"></div>
+        <div class="docadd">
+          <div class="seg" id="kind" role="group">
+            <button type="button" data-k="permit" data-i="kindPermit" class="on">Residence permit</button>
+            <button type="button" data-k="visa" data-i="kindVisa">Visa</button>
+          </div>
+          <div class="combo" id="dcombo">
+            <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-ip="docAdd" placeholder="Country" aria-label="Country">
             <ul hidden></ul>
           </div>
         </div>
       </div>
-      <div class="field">
-        <div class="lab"><span data-i="docs">Residence permit or visa</span> <em data-i="optional">optional</em></div>
-        <div class="line">
-          <div class="chips" id="dchips"></div>
-          <div class="docadd">
-            <div class="seg" id="kind" role="group">
-              <button type="button" data-k="permit" data-i="kindPermit" class="on">Residence permit</button>
-              <button type="button" data-k="visa" data-i="kindVisa">Visa</button>
-            </div>
-            <div class="combo" id="dcombo">
-              <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-ip="docAdd" placeholder="Country" aria-label="Country">
-              <ul hidden></ul>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
+  </div>
 
-    <div class="card mapcard">
-      <div class="regions" id="regions"></div>
-      <div class="mapwrap locked" id="mapwrap">
-        <svg id="map" viewBox="0 0 800 414.6" aria-label="World map"></svg>
-        <div class="legend" id="legend"></div>
-        <div class="zoom"><button type="button" id="zin" aria-label="Zoom in">+</button><button type="button" id="zout" aria-label="Zoom out">−</button></div>
-        <div class="tip" id="tip" hidden></div>
-        <div class="toast" id="toast" hidden></div>
-        <div class="gate" id="gate"><button type="button" data-i="needPassport">Add a passport to open your map</button></div>
-      </div>
-      <div class="under">
-        <div class="stats" id="stats"></div>
-        <label class="switch"><input type="checkbox" id="un"><i></i><span data-i="onlyUN">UN Member Countries Only</span></label>
-      </div>
-      <p class="note"><span data-i="tapHint">Tap a country to mark it as visited.</span> <span data-i="legendNote">* Visa-free also includes countries where you need an e-visa, a visa on arrival or an ETA (electronic travel authorization).</span></p>
+  <div class="card mapcard">
+    <div class="regions" id="regions"></div>
+    <div class="mapwrap locked" id="mapwrap">
+      <svg id="map" viewBox="0 0 800 414.6" aria-label="World map"></svg>
+      <div class="legend" id="legend"></div>
+      <div class="zoom"><button type="button" id="zin" aria-label="Zoom in">+</button><button type="button" id="zout" aria-label="Zoom out">−</button></div>
+      <div class="tip" id="tip" hidden></div>
+      <div class="toast" id="toast" hidden></div>
+      <div class="gate" id="gate"><button type="button" data-i="needPassport">Add a passport to open your map</button></div>
     </div>
+    <div class="under">
+      <div class="stats" id="stats"></div>
+      <label class="switch"><input type="checkbox" id="un"><i></i><span data-i="unLabel">UN Countries</span></label>
+    </div>
+  </div>
+</div>
 
-    <div class="card list" id="listcard" hidden>
-      <h2 data-i="listTitle">Where you can go</h2>
-      <div id="list"></div>
-    </div>
-    <p class="disclaimer" data-i="disclaimer">Visa rules change. This map is for guidance only; check official sources before you travel.</p>
-  </section>
+<main>
+  <p class="note"><span data-i="tapHint">Tap a country to mark it as visited.</span> <span data-i="filterHint">Tap a colour in the legend to show only those countries.</span> <span data-i="legendNote">* Visa-free also includes countries where you need an e-visa, a visa on arrival or an ETA (electronic travel authorization).</span></p>
+  <div class="card list" id="listcard" hidden>
+    <h2 data-i="listTitle">Where you can go</h2>
+    <div id="list"></div>
+  </div>
+  <p class="disclaimer" data-i="disclaimer">Visa rules change. This map is for guidance only; check official sources before you travel.</p>
 
   <section class="features">
     <h2 data-i="featTitle">What Passimi does</h2>
@@ -121,9 +111,12 @@
       <article><h3 data-i="f5t">Visa and transit checks</h3><p data-i="f5">A warning when a trip needs a visa, an ETA or an airport transit visa for your passports.</p></article>
       <article><h3 data-i="f6t">Public holidays</h3><p data-i="f6">Holidays where you live, your leave days, and the best dates for a long weekend.</p></article>
     </div>
-    <div class="stores">
-      <span class="store"><small data-i="soon">Coming soon</small><b>App Store</b></span>
-      <span class="store"><small data-i="soon">Coming soon</small><b>Google Play</b></span>
+    <div class="cta">
+      <p class="tagline" data-i="tagline">Passports, visas, residence permits and trips. One app.</p>
+      <div class="stores">
+        <span class="store"><small data-i="soon">Coming soon</small><b>App Store</b></span>
+        <span class="store"><small data-i="soon">Coming soon</small><b>Google Play</b></span>
+      </div>
     </div>
   </section>
 </main>

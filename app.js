@@ -35,6 +35,11 @@ let docs = (ls.get('docs', []) || []).filter((d) => d && (d.c in idx || d.c === 
 let visited = new Set((ls.get('visited', []) || []).filter((c) => c in idx));
 let unOnly = !!ls.get('unOnly', false);
 let docKind = 'permit';
+// Aciklama (legend) filtresi: vf/vr = gittigin vizesiz/vizeli, nf/nr = gitmedigin vizesiz/vizeli. Dordu secili = filtre yok.
+const CELLS = ['vf', 'vr', 'nf', 'nr'];
+let filt = new Set((ls.get('filter', CELLS) || CELLS).filter((x) => CELLS.includes(x)));
+if (!filt.size) filt = new Set(CELLS);
+const filtering = () => passports.length > 0 && filt.size < CELLS.length;
 let region = 'world';
 
 const t = (k, vars) => {
@@ -297,13 +302,15 @@ function tapKey(key) {
 }
 
 // ------------------------------------------------------------------ boyama, sayilar, liste
+const cellOf = (c, eff) => (eff.has(c) ? 'v' : 'n') + (infoOf(c).free === false ? 'r' : 'f');
 function paint() {
   cache = new Map();
-  const eff = effVisited();
+  const eff = effVisited(), on = filtering();
   for (const p of painted) {
-    const u = unitOf(pathCountry(p.dataset.k));
-    p.setAttribute('class', (eff.has(u) ? 'v' : 'n') + (infoOf(u).free === false ? 'r' : 'f'));
+    const cell = cellOf(unitOf(pathCountry(p.dataset.k)), eff);
+    p.setAttribute('class', on && !filt.has(cell) ? 'x' : cell);
   }
+  renderLegend();
   const scope = unOnly ? D.un : D.codes;
   const stats = $('#stats');
   stats.replaceChildren();
@@ -321,35 +328,92 @@ function paint() {
   }
   renderList(scope, eff);
 }
-const GROUPS = [['f', 'visaFree', 'nf'], ['t', 'eta', 'nf'], ['e', 'evisa', 'nf'], ['a', 'voa', 'nf'], ['r', 'visaRequired', 'nr']];
-const openGroups = new Set(['f']);
+// Gruplar: vizesiz · ETA / e-vize / kapida vize (tek grup) · vize gerekli; her grubun icinde kita kita.
+const GROUPS = [['free', ['f'], 'nf'], ['easy', ['t', 'e', 'a'], 'nf'], ['req', ['r', 'n'], 'nr']];
+const CONTS = ['europe', 'asia', 'northAmerica', 'southAmerica', 'africa', 'oceania'];
+const groupLabel = (g) => (g === 'free' ? t('visaFree') : g === 'easy' ? [t('eta'), t('evisa'), t('voa')].join(' · ') : t('visaRequired'));
+const openGroups = new Set(['free']);
 function renderList(scope, eff) {
   const card = $('#listcard');
   card.hidden = !passports.length;
   if (!passports.length) return;
+  const on = filtering();
   const coll = new Intl.Collator(lang);
   const sorted = [...scope].sort((a, b) => coll.compare(cname(a), cname(b)));
-  $('#list').replaceChildren(...GROUPS.map(([g, label, swatch]) => {
-    const items = sorted.filter((c) => { const x = infoOf(c).g; return x === g || (g === 'r' && x === 'n'); });
+  const out = [];
+  for (const [g, types, swatch] of GROUPS) {
+    const items = sorted.filter((c) => types.includes(infoOf(c).g) && (!on || filt.has(cellOf(c, eff))));
+    if (on && !items.length) continue;
     const d = el('details');
-    d.open = openGroups.has(g);
-    d.ontoggle = () => { d.open ? openGroups.add(g) : openGroups.delete(g); };
+    d.open = openGroups.has(g) || on;
+    d.ontoggle = () => { if (!on) d.open ? openGroups.add(g) : openGroups.delete(g); };
     const s = el('summary'), sw = el('span', 'sw e');
     sw.style.background = `var(--${swatch})`;
-    s.append(sw, el('span', null, t(label)), el('span', 'n', String(items.length)));
-    const box = el('div', 'cl');
-    for (const c of items) {
-      const b = el('button', eff.has(c) ? 'v' : '');
-      b.type = 'button';
-      b.title = infoOf(c).label;
-      b.append(el('span', 'fl', flag(c)), el('span', null, cname(c)));
-      if (infoOf(c).d > 0) b.append(el('small', null, String(infoOf(c).d)));
-      b.onclick = () => toggleUnit(unitOf(c));
-      box.append(b);
+    s.append(sw, el('span', null, groupLabel(g)), el('span', 'n', String(items.length)));
+    const body = el('div', 'gbody');
+    for (const k of CONTS) {
+      const sub = items.filter((c) => (D.cont[c] ?? 'asia') === k);
+      if (!sub.length) continue;
+      const h = el('div', 'ct', t(k));
+      h.append(el('span', null, String(sub.length)));
+      const box = el('div', 'cl');
+      for (const c of sub) {
+        const b = el('button', eff.has(c) ? 'v' : '');
+        b.type = 'button';
+        b.title = infoOf(c).label;
+        b.append(el('span', 'fl', flag(c)), el('span', null, cname(c)));
+        if (infoOf(c).d > 0) b.append(el('small', null, String(infoOf(c).d)));
+        b.onclick = () => toggleUnit(unitOf(c));
+        box.append(b);
+      }
+      body.append(h, box);
     }
-    d.append(s, box);
-    return d;
-  }));
+    d.append(s, body);
+    out.push(d);
+  }
+  if (!out.length) out.push(el('p', 'empty', t('noneInFilter')));
+  $('#list').replaceChildren(...out);
+}
+
+// ------------------------------------------------------------------ aciklama = filtre
+function setFilter(next) {
+  filt = next.size ? next : new Set(CELLS);
+  ls.set('filter', [...filt]);
+  paint();
+}
+function renderLegend() {
+  const on = filtering();
+  const sw = (v, edge) => { const s = el('span', 'sw' + (edge ? ' e' : '')); s.style.background = `var(--${v})`; return s; };
+  const cell = (k) => {
+    const b = el('button', 'cell' + (on ? (filt.has(k) ? ' on' : ' off') : ''));
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(on && filt.has(k)));
+    b.setAttribute('aria-label', `${t(k[0] === 'v' ? 'legendVisited' : 'legendNotVisited')} · ${t(k[1] === 'f' ? 'legendFree' : 'legendReq')}`);
+    b.append(sw(k, k === 'nf'));
+    // Ilk dokunus yalniz o rengi gosterir; sonrakiler ekler / cikarir
+    b.onclick = () => {
+      if (!on) return setFilter(new Set([k]));
+      const n = new Set(filt);
+      n.has(k) ? n.delete(k) : n.add(k);
+      setFilter(n);
+    };
+    return b;
+  };
+  const row = (label, a, b) => {
+    const r = el('button', 'rl', label);
+    r.type = 'button';
+    r.onclick = () => setFilter(on && filt.size === 2 && filt.has(a) && filt.has(b) ? new Set(CELLS) : new Set([a, b]));
+    return [r, cell(a), cell(b)];
+  };
+  const kids = [el('span'), el('b', null, t('legendFree')), el('b', null, t('legendReq')),
+    ...row(t('legendVisited'), 'vf', 'vr'), ...row(t('legendNotVisited'), 'nf', 'nr')];
+  if (on) {
+    const all = el('button', 'all', t('all'));
+    all.type = 'button';
+    all.onclick = () => setFilter(new Set(CELLS));
+    kids.push(all);
+  }
+  $('#legend').replaceChildren(...kids);
 }
 
 // ------------------------------------------------------------------ form
@@ -434,7 +498,7 @@ combo($('#dcombo'), () => {
   return list;
 }, (o) => { docs.push({ c: o.c, k: docKind }); commit(); });
 for (const b of $('#kind').children) b.onclick = () => { docKind = b.dataset.k; renderForm(); $('#dcombo input').focus(); };
-$('#gate button').onclick = () => { $('#pcombo input').focus(); $('.form').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+$('#gate button').onclick = () => { $('#pcombo input').focus(); };
 $('#un').checked = unOnly;
 $('#un').onchange = (e) => { unOnly = e.target.checked; ls.set('unOnly', unOnly); paint(); };
 
@@ -454,11 +518,6 @@ function applyLang() {
     b.onclick = () => { setRegion(r.key); fit(r.key); };
     return b;
   }));
-  const sw = (v, edge) => { const s = el('span', 'sw' + (edge ? ' e' : '')); s.style.background = `var(--${v})`; return s; };
-  $('#legend').replaceChildren(
-    el('span'), el('b', null, t('legendFree')), el('b', null, t('legendReq')),
-    el('span', null, t('legendVisited')), sw('vf'), sw('vr'),
-    el('span', null, t('legendNotVisited')), sw('nf', true), sw('nr'));
   renderForm();
   paint();
 }
