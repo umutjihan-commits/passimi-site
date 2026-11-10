@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Passimi — passports, visas and trips in one app</title>
+<meta name="description" content="Track passports, visas and residence permits, count your days, and see on a map where your passports can take you. Coming soon to the App Store and Google Play.">
+<link rel="canonical" href="https://passimi.com/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://passimi.com/">
+<meta property="og:title" content="Passimi — passports, visas and trips in one app">
+<meta property="og:description" content="See on a map where your passports can take you. Coming soon to the App Store and Google Play.">
+<meta property="og:image" content="https://passimi.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F6F3EB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#080C24" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <select id="lang" aria-label="Language"></select>
+</header>
+
+<main>
+  <section class="hero">
+    <svg class="logo" viewBox="-64 -104 888 420" role="img" aria-label="passimi">
+      <g class="ink">
+        <circle cx="61" cy="140" r="49"/><path d="M12 91V239"/>
+        <g transform="translate(-4 0)"><circle cx="207" cy="140" r="49"/><path d="M256 91V189"/></g>
+        <path transform="translate(-5 0)" d="M360.11 102.75A29 23.5 0 1 0 335 138A31 25.5 0 1 1 308.15 176.25"/>
+        <g transform="translate(-14 0)">
+          <path d="M466.11 102.75A29 23.5 0 1 0 441 138A31 25.5 0 1 1 414.15 176.25"/>
+          <path d="M520 91V189"/>
+          <path d="M568 189V128A36 36 0 0 1 640 128V189M640 128A36 36 0 0 1 712 128V189"/>
+          <path d="M760 91V189"/>
+        </g>
+      </g>
+      <g transform="translate(-14 0)">
+        <circle class="dot" cx="520" cy="44" r="14"/><circle class="dot" cx="760" cy="44" r="14"/>
+        <path class="dash" d="M548.80 22.88Q571.60 8.44 594.40 1.22M688.00 2.00Q709.60 9.20 731.20 22.88"/>
+        <g id="plane">
+          <path d="M34 0L30 -2.8L22 -3.4L6 -3.4L-12 -30L-17 -30L-6 -3.4L-23 -3.4L-28 -11L-32 -11L-30 -3L-32 0L-30 3L-32 11L-28 11L-23 3.4L-6 3.4L-17 30L-12 30L6 3.4L22 3.4L30 2.8L34 0Z"/>
+          <animateMotion dur="2.1s" fill="freeze" rotate="auto" path="M520 44Q580 -6 640 -6"
+            keyPoints="0;0;1" keyTimes="0;0.24;1" calcMode="spline" keySplines="0 0 1 1;0.45 0 0.2 1"/>
+        </g>
+      </g>
+    </svg>
+    <p class="tagline" data-i="tagline">Passports, visas, residence permits and trips. One app.</p>
+    <div class="stores">
+      <span class="store"><small data-i="soon">Coming soon</small><b>App Store</b></span>
+      <span class="store"><small data-i="soon">Coming soon</small><b>Google Play</b></span>
+    </div>
+  </section>
+
+  <section class="tool" id="tool">
+    <h1 data-i="toolTitle">Where can your passport take you?</h1>
+    <p class="sub" data-i="toolSub">Add your passports and see the world in four colours: where you have been, and where you can go without a visa.</p>
+
+    <div class="card form">
+      <div class="field">
+        <div class="lab"><span data-i="passports">Your passports</span> <em data-i="max4">up to 4</em></div>
+        <div class="line">
+          <div class="chips" id="pchips"></div>
+          <div class="combo" id="pcombo">
+            <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-ip="passportAdd" placeholder="Add a passport" aria-label="Add a passport">
+            <ul hidden></ul>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="lab"><span data-i="docs">Residence permit or visa</span> <em data-i="optional">optional</em></div>
+        <div class="line">
+          <div class="chips" id="dchips"></div>
+          <div class="docadd">
+            <div class="seg" id="kind" role="group">
+              <button type="button" data-k="permit" data-i="kindPermit" class="on">Residence permit</button>
+              <button type="button" data-k="visa" data-i="kindVisa">Visa</button>
+            </div>
+            <div class="combo" id="dcombo">
+              <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-ip="docAdd" placeholder="Country" aria-label="Country">
+              <ul hidden></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mapcard">
+      <div class="regions" id="regions"></div>
+      <div class="mapwrap locked" id="mapwrap">
+        <svg id="map" viewBox="0 0 800 414.6" aria-label="World map"></svg>
+        <div class="legend" id="legend"></div>
+        <div class="zoom"><button type="button" id="zin" aria-label="Zoom in">+</button><button type="button" id="zout" aria-label="Zoom out">−</button></div>
+        <div class="tip" id="tip" hidden></div>
+        <div class="toast" id="toast" hidden></div>
+        <div class="gate" id="gate"><button type="button" data-i="needPassport">Add a passport to open your map</button></div>
+      </div>
+      <div class="under">
+        <div class="stats" id="stats"></div>
+        <label class="switch"><input type="checkbox" id="un"><i></i><span data-i="onlyUN">UN Member Countries Only</span></label>
+      </div>
+      <p class="note"><span data-i="tapHint">Tap a country to mark it as visited.</span> <span data-i="legendNote">* Visa-free also includes countries where you need an e-visa, a visa on arrival or an ETA (electronic travel authorization).</span></p>
+    </div>
+
+    <div class="card list" id="listcard" hidden>
+      <h2 data-i="listTitle">Where you can go</h2>
+      <div id="list"></div>
+    </div>
+    <p class="disclaimer" data-i="disclaimer">Visa rules change. This map is for guidance only; check official sources before you travel.</p>
+  </section>
+
+  <section class="features">
+    <h2 data-i="featTitle">What Passimi does</h2>
+    <div class="grid">
+      <article><h3 data-i="f1t">Documents</h3><p data-i="f1">Passports, visas and residence permits in one place, with reminders before they expire.</p></article>
+      <article><h3 data-i="f2t">Day counter</h3><p data-i="f2">Schengen 90/180 and other stay limits, counted automatically from your calendar.</p></article>
+      <article><h3 data-i="f3t">Travel map</h3><p data-i="f3">The countries you have visited and where you can go visa-free, for all your passports together.</p></article>
+      <article><h3 data-i="f4t">Trip planner</h3><p data-i="f4">Plan city by city on a map and get a checklist for each trip: tickets, airport transfers, stays, insurance, mobile data and events.</p></article>
+      <article><h3 data-i="f5t">Visa and transit checks</h3><p data-i="f5">A warning when a trip needs a visa, an ETA or an airport transit visa for your passports.</p></article>
+      <article><h3 data-i="f6t">Public holidays</h3><p data-i="f6">Holidays where you live, your leave days, and the best dates for a long weekend.</p></article>
+    </div>
+    <div class="stores">
+      <span class="store"><small data-i="soon">Coming soon</small><b>App Store</b></span>
+      <span class="store"><small data-i="soon">Coming soon</small><b>Google Play</b></span>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <nav>
+    <a id="legal" href="https://umutjihan-commits.github.io/passimi-legal/" data-i="privacy">Privacy &amp; Terms</a>
+    <a href="mailto:support@passimi.com" data-i="contact">Contact</a>
+    <a href="https://www.instagram.com/passimiapp/" rel="noopener">Instagram</a>
+  </nav>
+  <p>© 2026 Mi Trading Co., Ltd. · Map data: Natural Earth</p>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>
