@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://passimi.com/sitemap.xml

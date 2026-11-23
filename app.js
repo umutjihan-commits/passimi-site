@@ -39,11 +39,11 @@ const docCount = (k) => docs.filter((d) => d.k === k).length;
 let visited = new Set((ls.get('visited', []) || []).filter((c) => c in idx));
 let unOnly = !!ls.get('unOnly', false);
 let docKind = 'permit';
-// Aciklama (legend) filtresi: vf/vr = gittigin vizesiz/vizeli, nf/nr = gitmedigin vizesiz/vizeli. Dordu secili = filtre yok.
-const CELLS = ['vf', 'vr', 'nf', 'nr'];
-let filt = new Set((ls.get('filter', CELLS) || CELLS).filter((x) => CELLS.includes(x)));
-if (!filt.size) filt = new Set(CELLS);
-const filtering = () => passports.length > 0 && filt.size < CELLS.length;
+// Liste filtreleri (uygulamadaki gibi; harita etkilenmez): Tumu / Gittiklerim / Gitmediklerim  x  Tumu / Vizesiz / Vizeli
+let visitF = ['all', 'v', 'n'].includes(ls.get('visitF')) ? ls.get('visitF') : 'all';
+let visaF = ['all', 'f', 'r'].includes(ls.get('visaF')) ? ls.get('visaF') : 'all';
+const filtering = () => passports.length > 0 && (visitF !== 'all' || visaF !== 'all');
+const passes = (cell) => (visitF === 'all' || cell[0] === visitF) && (visaF === 'all' || cell[1] === visaF);
 let region = 'world';
 
 const t = (k, vars) => {
@@ -317,10 +317,10 @@ function tapKey(key) {
 const cellOf = (c, eff) => (eff.has(c) ? 'v' : 'n') + (infoOf(c).free === false ? 'r' : 'f');
 function paint() {
   cache = new Map();
-  const eff = effVisited(), on = filtering();
+  const eff = effVisited();
   for (const p of painted) {
     const cell = cellOf(unitOf(pathCountry(p.dataset.k)), eff);
-    p.setAttribute('class', on && !filt.has(cell) ? 'x' : cell);
+    p.setAttribute('class', cell);
   }
   renderLegend();
   const scope = unOnly ? D.un : D.codes;
@@ -354,7 +354,7 @@ function renderList(scope, eff) {
   const sorted = [...scope].sort((a, b) => coll.compare(cname(a), cname(b)));
   const out = [];
   for (const [g, types, swatch] of GROUPS) {
-    const items = sorted.filter((c) => types.includes(infoOf(c).g) && (!on || filt.has(cellOf(c, eff))));
+    const items = sorted.filter((c) => types.includes(infoOf(c).g) && (!on || passes(cellOf(c, eff))));
     if (on && !items.length) continue;
     const d = el('details');
     d.open = openGroups.has(g) || on;
@@ -387,46 +387,19 @@ function renderList(scope, eff) {
   $('#list').replaceChildren(...out);
 }
 
-// ------------------------------------------------------------------ aciklama = filtre
-function setFilter(next) {
-  filt = next.size ? next : new Set(CELLS);
-  ls.set('filter', [...filt]);
-  paint();
-}
+// ------------------------------------------------------------------ aciklama + filtre dugmeleri
 function renderLegend() {
-  const on = filtering();
   const sw = (v, edge) => { const s = el('span', 'sw' + (edge ? ' e' : '')); s.style.background = `var(--${v})`; return s; };
-  const cell = (k) => {
-    const b = el('button', 'cell' + (on ? (filt.has(k) ? ' on' : ' off') : ''));
-    b.type = 'button';
-    b.setAttribute('aria-pressed', String(on && filt.has(k)));
-    b.setAttribute('aria-label', `${t(k[0] === 'v' ? 'legendVisited' : 'legendNotVisited')} · ${t(k[1] === 'f' ? 'legendFree' : 'legendReq')}`);
-    b.append(sw(k, k === 'nf'));
-    // Ilk dokunus yalniz o rengi gosterir; sonrakiler ekler / cikarir
-    b.onclick = () => {
-      if (!on) return setFilter(new Set([k]));
-      const n = new Set(filt);
-      n.has(k) ? n.delete(k) : n.add(k);
-      setFilter(n);
-    };
-    return b;
-  };
-  const row = (label, a, b) => {
-    const r = el('button', 'rl', label);
-    r.type = 'button';
-    r.onclick = () => setFilter(on && filt.size === 2 && filt.has(a) && filt.has(b) ? new Set(CELLS) : new Set([a, b]));
-    return [r, cell(a), cell(b)];
-  };
-  const kids = [el('span'), el('b', null, t('legendFree')), el('b', null, t('legendReq')),
-    ...row(t('legendVisited'), 'vf', 'vr'), ...row(t('legendNotVisited'), 'nf', 'nr')];
-  if (on) {
-    const all = el('button', 'all', t('all'));
-    all.type = 'button';
-    all.onclick = () => setFilter(new Set(CELLS));
-    kids.push(all);
+  $('#legend').replaceChildren(
+    el('span'), el('b', null, t('legendFree')), el('b', null, t('legendReq')),
+    el('span', null, t('legendVisited')), sw('vf'), sw('vr'),
+    el('span', null, t('legendNotVisited')), sw('nf', true), sw('nr'));
+  for (const [id, val] of [['#visitseg', visitF], ['#visaseg', visaF]]) {
+    for (const x of $(id).children) { x.classList.toggle('on', x.dataset.f === val); x.disabled = !passports.length && x.dataset.f !== 'all'; }
   }
-  $('#legend').replaceChildren(...kids);
 }
+for (const b of $('#visitseg').children) b.onclick = () => { visitF = b.dataset.f; ls.set('visitF', visitF); paint(); };
+for (const b of $('#visaseg').children) b.onclick = () => { visaF = b.dataset.f; ls.set('visaF', visaF); paint(); };
 
 // ------------------------------------------------------------------ form
 const norm = (s) => s.toLocaleLowerCase('tr').replace(/ı/g, 'i').normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -531,7 +504,7 @@ function applyLang() {
   $('meta[name=description]').content = t('desc');
   for (const e of document.querySelectorAll('[data-i]')) e.textContent = t(e.dataset.i);
   for (const e of document.querySelectorAll('[data-ip]')) { e.placeholder = t(e.dataset.ip); e.setAttribute('aria-label', t(e.dataset.ip)); }
-  $('#legal').href = 'https://umutjihan-commits.github.io/passimi-legal/' + (lang === 'tr' ? 'tr.html' : '');
+  $('#legal').href = '/legal/' + (lang === 'en' ? '' : lang + '.html');
   $('#regions').replaceChildren(...D.regions.map((r) => {
     const b = el('button', r.key === region ? 'on' : '', t(r.key));
     b.type = 'button';

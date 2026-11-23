@@ -6,6 +6,14 @@
 <title>Passimi — passports, visas and trips in one app</title>
 <meta name="description" content="Track passports, visas and residence permits, count your days, and see on a map where your passports can take you. Coming soon to the App Store and Google Play.">
 <link rel="canonical" href="https://passimi.com/">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"WebSite","name":"Passimi","alternateName":"passimi.com","url":"https://passimi.com/"},
+ {"@type":"Organization","name":"Passimi","url":"https://passimi.com/","logo":"https://passimi.com/apple-touch-icon.png",
+  "email":"support@passimi.com","sameAs":["https://www.instagram.com/passimiapp/"],
+  "parentOrganization":{"@type":"Organization","name":"Mi Trading Co., Ltd."}}
+]}
+</script>
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://passimi.com/">
 <meta property="og:title" content="Passimi — passports, visas and trips in one app">
@@ -95,9 +103,23 @@
 </div>
 
 <main>
-  <p class="note"><span data-i="tapHint">Tap a country to mark it as visited.</span> <span data-i="filterHint">Tap a colour in the legend to show only those countries.</span> <span data-i="legendNote">* Visa-free also includes countries where you need an e-visa, a visa on arrival or an ETA (electronic travel authorization).</span></p>
+  <p class="note"><span data-i="tapHint">Tap a country to mark it as visited.</span> <span data-i="legendNote">* Visa-free also includes countries where you need an e-visa, a visa on arrival or an ETA (electronic travel authorization).</span></p>
   <div class="card list" id="listcard" hidden>
-    <h2 data-i="listTitle">Where you can go</h2>
+    <div class="listhead">
+      <h2 data-i="listTitle">Where you can go</h2>
+      <div class="filters">
+        <div class="seg" id="visitseg" role="group">
+          <button type="button" data-f="all" data-i="all" class="on">All</button>
+          <button type="button" data-f="v" data-i="visitedTab">Visited</button>
+          <button type="button" data-f="n" data-i="notVisited">Not Visited</button>
+        </div>
+        <div class="seg" id="visaseg" role="group">
+          <button type="button" data-f="all" data-i="all" class="on">All</button>
+          <button type="button" data-f="f" data-i="visaFree">Visa Free</button>
+          <button type="button" data-f="r" data-i="visaRequired">Visa Required</button>
+        </div>
+      </div>
+    </div>
     <div id="list"></div>
   </div>
   <p class="disclaimer" data-i="disclaimer">Visa rules change. This map is for guidance only; check official sources before you travel.</p>
@@ -124,7 +146,7 @@
 
 <footer>
   <nav>
-    <a id="legal" href="https://umutjihan-commits.github.io/passimi-legal/" data-i="privacy">Privacy &amp; Terms</a>
+    <a id="legal" href="/legal/" data-i="privacy">Privacy &amp; Terms</a>
     <a href="mailto:support@passimi.com" data-i="contact">Contact</a>
     <a href="https://www.instagram.com/passimiapp/" rel="noopener">Instagram</a>
   </nav>
